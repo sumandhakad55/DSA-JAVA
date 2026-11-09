@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kharcha - daily expense tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<header class="top">
+  <h1>Kharcha</h1>
+  <nav id="tabs" aria-label="Pages">
+    <button data-page="today" class="active">Today</button>
+    <button data-page="expenses">Expenses</button>
+    <button data-page="analysis">Analysis</button>
+    <button data-page="settings">Settings</button>
+  </nav>
+  <button id="addBtn" class="primary">Add expense</button>
+</header>
+
+<main>
+
+  <!-- TODAY -->
+  <section id="page-today" class="page">
+    <div class="ledger">
+      <div class="ledger-main">
+        <span class="label">Spent today</span>
+        <strong id="todayAmt">₹0</strong>
+      </div>
+      <div class="ledger-side">
+        <div><span class="label">Balance in account</span><strong id="balanceAmt">₹0</strong></div>
+        <div><span class="label">Spent this month</span><strong id="monthAmt">₹0</strong></div>
+      </div>
+    </div>
+
+    <div class="budget" id="budgetBox">
+      <div class="bar-head"><span id="budgetText">Monthly budget</span><b id="budgetPct"></b></div>
+      <div class="bar big"><i id="budgetBar"></i></div>
+    </div>
+
+    <div class="two">
+      <article>
+        <h2>Spending by app this month</h2>
+        <div id="byMerchant" class="bars"></div>
+      </article>
+      <article>
+        <h2>Paid through</h2>
+        <div id="byPayment" class="bars"></div>
+      </article>
+    </div>
+
+    <article>
+      <h2>Today's expenses</h2>
+      <div id="todayList" class="table-wrap"></div>
+    </article>
+  </section>
+
+  <!-- EXPENSES -->
+  <section id="page-expenses" class="page" hidden>
+    <article>
+      <h2>Find expenses</h2>
+      <div class="filters">
+        <label>Search<input id="fQ" type="search" placeholder="App or note"></label>
+        <label>App<input id="fMerchant" list="merchants" placeholder="Any"></label>
+        <label>Category<select id="fCategory"></select></label>
+        <label>Paid through<select id="fPayment"></select></label>
+        <label>From<input id="fFrom" type="date"></label>
+        <label>To<input id="fTo" type="date"></label>
+      </div>
+      <div class="row-actions">
+        <button id="fApply" class="primary">Show</button>
+        <button id="fClear">Clear filters</button>
+      </div>
+      <p id="fTotal" class="muted"></p>
+      <div id="expenseList" class="table-wrap"></div>
+    </article>
+
+    <div class="two">
+      <article>
+        <h2>Paste a bank SMS</h2>
+        <p class="muted">Paste the debit message from your bank or UPI app. Kharcha reads the amount and the shop.</p>
+        <textarea id="smsText" rows="4" placeholder="Rs 234.00 debited from A/c XX1234 to BLINKIT via UPI"></textarea>
+        <button id="smsBtn" class="primary">Save from SMS</button>
+      </article>
+      <article>
+        <h2>Import or export</h2>
+        <p class="muted">Import a bank, PhonePe or Google Pay statement saved as CSV. The first row must be the column names.</p>
+        <input id="csvFile" type="file" accept=".csv">
+        <button id="csvBtn">Import CSV</button>
+        <hr>
+        <label>Month to export<input id="exportMonth" type="month"></label>
+        <button id="exportBtn">Download CSV</button>
+      </article>
+    </div>
+  </section>
+
+  <!-- ANALYSIS -->
+  <section id="page-analysis" class="page" hidden>
+    <article>
+      <label class="inline">Month<input id="aMonth" type="month"></label>
+      <div id="aStats" class="stats"></div>
+    </article>
+    <div class="two">
+      <article>
+        <h2>Share by app</h2>
+        <div class="chart-box"><canvas id="pieChart"></canvas></div>
+      </article>
+      <article>
+        <h2>Spending by day</h2>
+        <div class="chart-box"><canvas id="dayChart"></canvas></div>
+      </article>
+    </div>
+    <div class="two">
+      <article><h2>By app</h2><div id="aMerchant" class="bars"></div></article>
+      <article><h2>By category</h2><div id="aCategory" class="bars"></div></article>
+    </div>
+    <article><h2>Paid through</h2><div id="aPayment" class="bars"></div></article>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="page-settings" class="page" hidden>
+    <div class="two">
+      <article>
+        <h2>Balance and budget</h2>
+        <label>Opening balance (₹)
+          <input id="sBalance" type="number" step="0.01">
+        </label>
+        <p class="muted">Money in your account when you started tracking. Balance = opening balance + income - expenses.</p>
+        <label>Monthly budget (₹)
+          <input id="sBudget" type="number" step="0.01" min="0">
+        </label>
+        <button id="sSave" class="primary">Save settings</button>
+      </article>
+      <article>
+        <h2>Add income</h2>
+        <label>Amount (₹)<input id="iAmount" type="number" step="0.01" min="0"></label>
+        <label>Source<input id="iSource" placeholder="Salary, pocket money"></label>
+        <label>Date<input id="iDate" type="date"></label>
+        <button id="iSave" class="primary">Add income</button>
+        <div id="incomeList" class="plain-list"></div>
+      </article>
+    </div>
+
+    <article>
+      <h2>Auto-detect rules</h2>
+      <p class="muted">When a bank SMS or CSV line contains the keyword, Kharcha names the app and category for you.</p>
+      <div class="filters">
+        <label>Keyword<input id="rKeyword" placeholder="blinkit"></label>
+        <label>App name<input id="rMerchant" placeholder="Blinkit"></label>
+        <label>Category<select id="rCategory"></select></label>
+      </div>
+      <button id="rSave" class="primary">Add rule</button>
+      <div id="ruleList" class="plain-list"></div>
+    </article>
+
+    <article>
+      <h2>Nightly notification</h2>
+      <p class="muted">The time and the Telegram / email details are set in <code>application.properties</code>. Use the button to check that the message reaches you.</p>
+      <button id="testBtn">Send test notification</button>
+    </article>
+  </section>
+</main>
+
+<dialog id="expenseDialog">
+  <form id="expenseForm" method="dialog">
+    <h2 id="dialogTitle">Add expense</h2>
+    <input type="hidden" id="eId">
+    <label>Amount (₹)<input id="eAmount" type="number" step="0.01" min="0.01" required></label>
+    <label>App or shop<input id="eMerchant" list="merchants" placeholder="Blinkit, Flipkart, Instamart" required></label>
+    <label>Category<select id="eCategory"></select></label>
+    <label>Paid through<select id="ePayment"></select></label>
+    <label>Date and time<input id="eWhen" type="datetime-local" required></label>
+    <label>Note<input id="eNote" maxlength="255" placeholder="Optional"></label>
+    <div class="row-actions">
+      <button type="submit" class="primary">Save expense</button>
+      <button type="button" id="eCancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<datalist id="merchants">
+  <option value="Blinkit"><option value="Flipkart"><option value="Instamart"><option value="Zepto">
+  <option value="Zomato"><option value="Swiggy"><option value="Amazon"><option value="Myntra">
+</datalist>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="app.js"></script>
+</body>
+</html>
